@@ -11,22 +11,21 @@ using namespace sf;
 
 class Torre {
 private:
-    int numDisks;
-    double diskWidth, diskHeight;
+    double baseDiskWidth, diskHeight;
     double posX, posY;
     double prop;
-    vector<RectangleShape> *disks;
+    vector<RectangleShape> disks;
 public:
     Torre(int numDisks, double posX, double posY, double diskWidth, double diskHeight);
     ~Torre();
-    bool addDisk(RectangleShape *disk);
-    RectangleShape *popDisk();
-    RectangleShape top() {return disks->back();}
+    bool addDisk(RectangleShape* disk);
+    RectangleShape* popDisk();
+    RectangleShape top() {return disks.back();}
     void draw(RenderWindow &window);
     bool isPlaceable(RectangleShape disk);
-    bool isEmpty() {return disks->empty();}
+    bool isEmpty() {return disks.empty();}
 private:
-    void generateDisk(double width, double height, double posX, double posY, Color *color);
+    void generateDisk(double width, double height, double posX, double posY, Color* color);
 };
 
 
