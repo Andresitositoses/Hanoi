@@ -13,7 +13,7 @@ private:
 public:
     GameState(unsigned int width, unsigned int height);
     ~GameState() override;
-    void update(sf::RenderWindow& window, int& state) override;
+    void run(sf::RenderWindow& window, int& state) override;
     void draw(sf::RenderWindow& window) override;
     bool tab_manage();
 }; 

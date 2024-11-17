@@ -28,7 +28,7 @@ EndState::~EndState() {
     }
 }
 
-void EndState::update(sf::RenderWindow& window, int& state) {
+void EndState::run(sf::RenderWindow& window, int& state) {
     static bool escReleased = false;
 
     // Esperar a que se suelte la tecla ESC antes de permitir una nueva transición

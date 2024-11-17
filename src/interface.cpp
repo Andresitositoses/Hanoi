@@ -26,12 +26,13 @@ Interface::~Interface() {
 
 void Interface::update(sf::RenderWindow& window) {
     int nextState = currentState;
-    states[currentState]->update(window, nextState);
+    states[currentState]->run(window, nextState);
     
     // Verificar que el nuevo estado es válido antes de cambiar
-    if (nextState != currentState && states.count(nextState) > 0) {
+    if (nextState != currentState) {
         std::cout << "Cambiando de estado " << currentState << " a " << nextState << std::endl;
         currentState = nextState;
+        //TODO: Inicializar nuevo estado y dibujar elementos
     }
 }
 

@@ -28,7 +28,7 @@ MenuState::~MenuState() {
     }
 }
 
-void MenuState::update(sf::RenderWindow& window, int& state) {
+void MenuState::run(sf::RenderWindow& window, int& state) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
         state = GAME;
     }

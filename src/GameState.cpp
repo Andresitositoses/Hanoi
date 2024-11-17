@@ -60,7 +60,7 @@ bool GameState::tab_manage() {
     return tab;
 }
 
-void GameState::update(sf::RenderWindow& window, int& state) {
+void GameState::run(sf::RenderWindow& window, int& state) {
     tab_manage();
     
     // Gestión del movimiento de torres

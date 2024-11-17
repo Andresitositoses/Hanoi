@@ -30,13 +30,13 @@ int main() {
             }
         }
 
-        // Actualizar
+        // Actualizar estado del juego
         interface.update(window);
 
         // Dibujar
-        window.clear(sf::Color::Black);
-        interface.draw(window);
-        window.display();
+        window.clear(sf::Color::Black); // Eliminar elementos anteriores
+        interface.draw(window); // Dibujar nuevos elementos
+        window.display(); // Mostrar ventana
     }
 
     return 0;
