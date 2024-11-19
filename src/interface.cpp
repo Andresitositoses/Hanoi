@@ -30,9 +30,9 @@ void Interface::update(sf::RenderWindow& window) {
     
     // Verificar que el nuevo estado es válido antes de cambiar
     if (nextState != currentState) {
-        std::cout << "Cambiando de estado " << currentState << " a " << nextState << std::endl;
         currentState = nextState;
-        //TODO: Inicializar nuevo estado y dibujar elementos
+        // Inicializar nuevo estado y dibujar elementos
+        states[currentState]->init(window);
     }
 }
 

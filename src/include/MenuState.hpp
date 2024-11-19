@@ -4,12 +4,16 @@
 
 class MenuState : public ProgramState {
 private:
+    unsigned int width;
+    unsigned int height;
     std::vector<std::pair<sf::Font*, sf::Text*>> texts;
-    unsigned int width, height;
+    int selectedOption;
+    const int NUM_OPTIONS = 5;
 
 public:
     MenuState(unsigned int width, unsigned int height);
     ~MenuState();
-    void run(sf::RenderWindow& window, int& state) override;
-    void draw(sf::RenderWindow& window) override;
+    void init(sf::RenderWindow& window);
+    void run(sf::RenderWindow& window, int& state);
+    void draw(sf::RenderWindow& window);
 }; 

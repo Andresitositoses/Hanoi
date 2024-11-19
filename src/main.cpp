@@ -13,12 +13,12 @@ int main() {
     // Obtener la resolución de la pantalla
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
 
-    // Crear la ventana en modo pantalla completa
-    sf::RenderWindow window(desktop, "Torres de Hanoi", sf::Style::Fullscreen);
+    // Crear la ventana con resolución Full HD
+    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Torres de Hanoi", sf::Style::Default);
     window.setFramerateLimit(60);
 
-    // Crear la interfaz con las dimensiones de la pantalla
-    Interface interface(desktop.width, desktop.height);
+    // Crear la interfaz con las dimensiones de la ventana
+    Interface interface(1920, 1080);
 
     // Bucle principal del juego
     while (window.isOpen()) {

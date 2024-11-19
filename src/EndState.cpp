@@ -12,7 +12,7 @@ EndState::EndState(unsigned int width, unsigned int height)
         sf::Text* text = new sf::Text();
         text->setFont(*font);
         text->setString("Fin de juego\nPresiona ESC para volver al menú");
-        text->setCharacterSize(100);
+        text->setCharacterSize(60);
         text->setPosition(width/2.0f, height/2.0f);
         text->setOrigin(text->getLocalBounds().width/2.0f, text->getLocalBounds().height/2.0f);
         
@@ -26,6 +26,10 @@ EndState::~EndState() {
         delete font;
         delete text;
     }
+}
+
+void EndState::init(sf::RenderWindow& window) {
+    // TODO: En esta etapa habría que mostrar el tiempo transcurrido, el número de movimientos, etc.
 }
 
 void EndState::run(sf::RenderWindow& window, int& state) {

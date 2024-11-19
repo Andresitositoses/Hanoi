@@ -4,35 +4,39 @@
 
 #include "include/torre.hpp"
 
-Torre::Torre(int numDisks, double posX, double posY, double width, double height) {
-    this->posX = posX; // Posición X de la torre (Coordenada X de la anilla base)
-    this->posY = posY; // Posición Y de la torre (Coordenada Y de la anilla base)
-    this->baseDiskWidth = width; // Ancho de la anilla base
-    this->diskHeight = height; // Altura de las anillas
-    this->prop = (numDisks > 0) ? (double) (1. / numDisks) : 0; // Proporción de ancho de las anillas
+Torre::Torre(unsigned int level, double posX, double posY, double width, double height) 
+    : posX(posX), posY(posY), baseDiskWidth(width), diskHeight(height), prop((level > 0) ? (double) (1. / level) : 0) {
     this->disks = vector<RectangleShape>(); // Vector de anillas
+    this->level = level;
 
     // Establece una semilla de azar a partir de un instante de tiempo
     srand(time(NULL));
+}
 
+// Destructor de la torre
+Torre::~Torre() {
+    disks.clear();
+}
+
+// Llena la torre con un número determinado de anillas
+void Torre::fill() {
     // Genera la anilla base
-    if(numDisks != 0){
-        generateDisk(width, height,
+    if(level != 0){
+        generateDisk(baseDiskWidth, diskHeight,
                      posX, posY,
                      new Color(rand() % 256,rand() % 256, rand() % 256));
     }
 
     // Genera el resto de anillas
-    for(double i=1; i < numDisks; i++){
-        generateDisk(width - width * prop * i, height,
-                     posX + (width * prop) / 2 * i, this->disks.back().getPosition().y - height,
+    for(double i=1; i < level; i++){
+        generateDisk(baseDiskWidth - baseDiskWidth * prop * i, diskHeight,
+                     posX + (baseDiskWidth * prop) / 2 * i, this->disks.back().getPosition().y - diskHeight,
                      new Color(rand() % 256,rand() % 256, rand() % 256));
     }
-
 }
 
-// Destructor de la torre
-Torre::~Torre() {
+// Vacía la torre
+void Torre::empty() {
     disks.clear();
 }
 
@@ -45,26 +49,30 @@ void Torre::generateDisk(double width, double height, double posX, double posY, 
 }
 
 // Añade una anilla externa a la torre
-bool Torre::addDisk(RectangleShape* disk) {
-    disk->setPosition(posX + disk->getSize().x / 2, disks.back().getPosition().y - diskHeight);
+bool Torre::addDisk(Anilla* disk) {
+    if (disks.empty()) {
+        disk->setPosition(posX, posY);
+    } else {
+        disk->setPosition(disks.back().getPosition().x + (disks.back().getSize().x - disk->getSize().x) / 2, disks.back().getPosition().y - diskHeight);
+    }
     disks.push_back(*disk);
     return true;
 }
 
 // Elimina y devuelve una copia de la anilla superior de la torre
-RectangleShape* Torre::popDisk() {
+Anilla* Torre::popDisk() {
     if(disks.size() == 0){
         return nullptr;
     }
     else {
-        RectangleShape* disk = new RectangleShape(disks.back());
+        Anilla* disk = new Anilla(disks.back());
         disks.pop_back();
         return disk;
     }
 }
 
 // Comprueba si una determinada anilla puede ser colocada en la torre
-bool Torre::isPlaceable(RectangleShape disk) {
+bool Torre::isPlaceable(Anilla disk) {
     if (disks.empty()) {
         return true;
     }

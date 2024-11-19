@@ -9,21 +9,28 @@
 using namespace std;
 using namespace sf;
 
+// Definir Anilla como un alias para sf::RectangleShape
+using Anilla = sf::RectangleShape;
+
 class Torre {
 private:
     double baseDiskWidth, diskHeight;
     double posX, posY;
     double prop;
-    vector<RectangleShape> disks;
+    vector<Anilla> disks;
+    unsigned int level;
 public:
-    Torre(int numDisks, double posX, double posY, double diskWidth, double diskHeight);
+    Torre(unsigned int level, double posX, double posY, double diskWidth, double diskHeight);
     ~Torre();
-    bool addDisk(RectangleShape* disk);
-    RectangleShape* popDisk();
-    RectangleShape top() {return disks.back();}
-    void draw(RenderWindow &window);
-    bool isPlaceable(RectangleShape disk);
+    bool addDisk(Anilla* disk);
+    Anilla* popDisk();
+    Anilla top() {return disks.back();}
+    void fill();
+    void empty();
+    bool isPlaceable(Anilla disk);
     bool isEmpty() {return disks.empty();}
+    bool isComplete() {return disks.size() == level;}
+    void draw(RenderWindow &window);
 private:
     void generateDisk(double width, double height, double posX, double posY, Color* color);
 };

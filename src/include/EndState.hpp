@@ -10,6 +10,7 @@ private:
 public:
     EndState(unsigned int width, unsigned int height);
     ~EndState() override;
+    void init(sf::RenderWindow& window) override;
     void run(sf::RenderWindow& window, int& state) override;
     void draw(sf::RenderWindow& window) override;
 }; 
