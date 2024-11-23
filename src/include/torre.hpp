@@ -12,6 +12,12 @@ using namespace sf;
 // Definir Anilla como un alias para sf::RectangleShape
 using Anilla = sf::RectangleShape;
 
+// Enumerado para las apariencias
+enum Appearance {
+    RANDOM = 0,
+    WOODEN = 1
+};
+
 class Torre {
 private:
     double baseDiskWidth, diskHeight;
@@ -19,8 +25,10 @@ private:
     double prop;
     vector<Anilla> disks;
     unsigned int level;
+    unsigned int appearance;
+    sf::Texture diskTexture;
 public:
-    Torre(unsigned int level, double posX, double posY, double diskWidth, double diskHeight);
+    Torre(unsigned int level, double posX, double posY, double diskWidth, double diskHeight, unsigned int appearance);
     ~Torre();
     bool addDisk(Anilla* disk);
     Anilla* popDisk();
@@ -31,8 +39,9 @@ public:
     bool isEmpty() {return disks.empty();}
     bool isComplete() {return disks.size() == level;}
     void draw(RenderWindow &window);
+    void cambiarApariencia();
 private:
-    void generateDisk(double width, double height, double posX, double posY, Color* color);
+    void generateDisk(double width, double height, double posX, double posY);
 };
 
 

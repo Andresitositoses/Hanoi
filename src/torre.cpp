@@ -4,13 +4,21 @@
 
 #include "include/torre.hpp"
 
-Torre::Torre(unsigned int level, double posX, double posY, double width, double height) 
-    : posX(posX), posY(posY), baseDiskWidth(width), diskHeight(height), prop((level > 0) ? (double) (1. / level) : 0) {
-    this->disks = vector<RectangleShape>(); // Vector de anillas
+Torre::Torre(unsigned int level, double posX, double posY, double width, double height, unsigned int appearance) 
+    : posX(posX), posY(posY), baseDiskWidth(width), diskHeight(height), prop((level > 0) ? (double) (1. / level) : 0), appearance(appearance) {
+    this->disks = vector<Anilla>(); // Vector de anillas
     this->level = level;
 
-    // Establece una semilla de azar a partir de un instante de tiempo
-    srand(time(NULL));
+    // Cargar la textura en el constructor
+    if (appearance == Appearance::RANDOM) {
+        srand(time(NULL));
+    } else if (appearance == Appearance::WOODEN) {
+        if (!diskTexture.loadFromFile("img/wooden_disk.png")) {
+            // Manejar error si no se puede cargar
+        }
+    } else {
+        srand(time(NULL));
+    }
 }
 
 // Destructor de la torre
@@ -22,16 +30,13 @@ Torre::~Torre() {
 void Torre::fill() {
     // Genera la anilla base
     if(level != 0){
-        generateDisk(baseDiskWidth, diskHeight,
-                     posX, posY,
-                     new Color(rand() % 256,rand() % 256, rand() % 256));
+        generateDisk(baseDiskWidth, diskHeight, posX, posY);
     }
 
     // Genera el resto de anillas
     for(double i=1; i < level; i++){
         generateDisk(baseDiskWidth - baseDiskWidth * prop * i, diskHeight,
-                     posX + (baseDiskWidth * prop) / 2 * i, this->disks.back().getPosition().y - diskHeight,
-                     new Color(rand() % 256,rand() % 256, rand() % 256));
+                     posX + (baseDiskWidth * prop) / 2 * i, this->disks.back().getPosition().y - diskHeight);
     }
 }
 
@@ -41,11 +46,20 @@ void Torre::empty() {
 }
 
 // Genera una anilla y la añade a la torre
-void Torre::generateDisk(double width, double height, double posX, double posY, Color *color) {
-    RectangleShape* disk = new RectangleShape(Vector2f(width, height));
+void Torre::generateDisk(double width, double height, double posX, double posY) {
+    Anilla* disk = new Anilla(Vector2f(width, height));
     disk->setPosition(posX, posY);
-    disk->setFillColor(color != nullptr ? *color : Color::White);
+    if (appearance == Appearance::RANDOM) {
+        disk->setTexture(nullptr);
+        disk->setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
+    } else if (appearance == Appearance::WOODEN) {
+        disk->setTexture(&diskTexture);
+    } else {
+        disk->setTexture(nullptr);
+        disk->setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
+    }
     this->disks.push_back(*disk);
+    delete disk;
 }
 
 // Añade una anilla externa a la torre
@@ -83,5 +97,21 @@ bool Torre::isPlaceable(Anilla disk) {
 void Torre::draw(RenderWindow &window) {
     for(int i=0; i < disks.size(); i++){
         window.draw(disks.at(i));
+    }
+}
+
+void Torre::cambiarApariencia() {
+    // Alternar entre las apariencias existentes
+    appearance = (appearance == WOODEN) ? RANDOM : WOODEN;
+    
+    // Actualizar la apariencia de todas las anillas existentes
+    for(auto& disk : disks) {
+        if (appearance == WOODEN) {
+            disk.setTexture(&diskTexture);
+            disk.setFillColor(sf::Color::White); // Reset color
+        } else {
+            disk.setTexture(nullptr);
+            disk.setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
+        }
     }
 }

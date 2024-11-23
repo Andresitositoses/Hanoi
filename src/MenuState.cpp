@@ -4,8 +4,6 @@
 #define FONTS_PATH "Fonts\\"
 #define MAX_LEVEL 20
 
-extern unsigned int level;
-
 MenuState::MenuState(unsigned int width, unsigned int height) 
     : width(width), height(height), selectedOption(0) {
     
@@ -15,41 +13,64 @@ MenuState::MenuState(unsigned int width, unsigned int height)
     if(menuFont->loadFromFile((std::string)FONTS_PATH + "stjelogo/Stjldbl1.ttf") &&
        levelFont->loadFromFile((std::string)FONTS_PATH + "arial.ttf")) {
         
-        std::vector<std::string> menuOptions = {
-            "Iniciar partida",
-            "Numero de anillas",
-            "Modo",
-            "Accesibilidad",
-            "Salir del juego"
+        menuOptions = {
+            {"Iniciar partida", &MenuState::startGameOption},  
+            {"Numero de anillas", &MenuState::setLevelOption},
+            {"Apariencia", &MenuState::setAppearanceOption},
+            {"Modo", &MenuState::setModeOption},
+            {"Accesibilidad", &MenuState::setAccessibilityOption},
+            {"Salir del juego", &MenuState::exitGameOption}
         };
 
         float startY = height/3.0f;
         float spacing = 80.0f;
 
         // Crear las opciones del menú
-        for(int i = 0; i < menuOptions.size(); i++) {
+        int optionCount = 0;
+        for(const auto& [optionText, _] : menuOptions) {
             sf::Text* text = new sf::Text();
             text->setFont(*menuFont);
-            text->setString(menuOptions[i]);
+            text->setString(optionText);
             text->setCharacterSize(60);
-            text->setPosition(width/2.0f, startY + i * spacing);
+            text->setPosition(width/2.0f, startY + optionCount * spacing);
             text->setOrigin(text->getLocalBounds().width/2.0f, text->getLocalBounds().height/2.0f);
-            texts.push_back({menuFont, text});
+            optionsTexts.push_back({menuFont, text});
+            optionCount++;
         }
 
-        // Crear el texto del nivel actual en la esquina superior izquierda
+        // Crear el texto del nivel actual
         sf::Text* levelText = new sf::Text();
         levelText->setFont(*levelFont);
         levelText->setString("Nivel actual: " + std::to_string(level));
         levelText->setCharacterSize(40);
         levelText->setPosition(50, 50);
-        texts.push_back({levelFont, levelText});
+        optionsTexts.push_back({levelFont, levelText});
+
+        // Crear el texto de la apariencia actual
+        sf::Text* appearanceText = new sf::Text();
+        appearanceText->setFont(*levelFont);
+        std::string appearanceStr = "";
+        switch (currentAppearance) {    
+            case Appearance::RANDOM:
+                appearanceStr = "Colores aleatorios";
+                break;
+            case Appearance::WOODEN:
+                appearanceStr = "Madera";
+                break;
+            default:
+                appearanceStr = "Colores aleatorios";
+                break;
+        }
+        appearanceText->setString("Apariencia: " + appearanceStr);
+        appearanceText->setCharacterSize(40);
+        appearanceText->setPosition(50, 100); // Debajo del texto del nivel
+        optionsTexts.push_back({levelFont, appearanceText});
     }
 }
 
 MenuState::~MenuState() {
     // Limpieza de memoria
-    for(auto& [font, text] : texts) {
+    for(auto& [font, text] : optionsTexts) {
         delete font;
         delete text;
     }
@@ -64,29 +85,17 @@ void MenuState::run(sf::RenderWindow& window, int& state) {
 
     if (keyReleased) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-            selectedOption = (selectedOption - 1 + NUM_OPTIONS) % NUM_OPTIONS;
+            selectedOption = (selectedOption - 1 + menuOptions.size()) % menuOptions.size();
             keyReleased = false;
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-            selectedOption = (selectedOption + 1) % NUM_OPTIONS;
+            selectedOption = (selectedOption + 1) % menuOptions.size();
             keyReleased = false;
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)) {
-            switch(selectedOption) {
-                case 0: // Iniciar partida
-                    state = GAME;
-                    break;
-                case 1: // Número de anillas
-                    level = (level % MAX_LEVEL) + 1;
-                    // Actualizar solo el texto del nivel
-                    texts[5].second->setString("Nivel actual: " + std::to_string(level));
-                    break;
-                case 4: // Salir del juego
-                    window.close();
-                    break;
-                default:
-                    break;
-            }
+            // Ejecuta la función asociada a la opción seleccionada
+            auto& [optionText, optionFunc] = menuOptions[selectedOption];
+            (this->*optionFunc)(window, &state);
             keyReleased = false;
         }
     }
@@ -101,9 +110,9 @@ void MenuState::run(sf::RenderWindow& window, int& state) {
 void MenuState::draw(sf::RenderWindow& window) {
     window.clear(sf::Color::Black);
     
-    // Dibujar las opciones del menú (los primeros 5 textos)
-    for(int i = 0; i < 5; i++) {
-        const auto& [font, text] = texts[i];
+    // Dibujar las opciones del menú
+    for(int i = 0; i < menuOptions.size(); i++) {
+        const auto& [font, text] = optionsTexts[i];
         if (i == selectedOption) {
             text->setFillColor(sf::Color::Yellow);
             text->setCharacterSize(70);
@@ -114,7 +123,47 @@ void MenuState::draw(sf::RenderWindow& window) {
         window.draw(*text);
     }
     
-    // Dibujar el nivel actual (el último texto)
-    const auto& [font, text] = texts[5];
-    window.draw(*text);
+    // Dibujar los textos informativos (nivel y apariencia)
+    const auto& [levelFont, levelText] = optionsTexts[menuOptions.size()];
+    const auto& [appearanceFont, appearanceText] = optionsTexts[menuOptions.size() + 1];
+    window.draw(*levelText);
+    window.draw(*appearanceText);
 } 
+
+// Menu options
+
+void MenuState::startGameOption(sf::RenderWindow& window, int* state) {
+    *state = GAME;
+}
+
+void MenuState::setLevelOption(sf::RenderWindow& window, int* state) {
+    level = (level >= MAX_LEVEL) ? 1 : level + 1;
+    
+    // Actualizar el texto informativo del nivel
+    optionsTexts[menuOptions.size()].second->setString(
+        "Nivel actual: " + std::to_string(level)
+    );
+}
+
+void MenuState::setAppearanceOption(sf::RenderWindow& window, int* state) {
+    currentAppearance = (currentAppearance == Appearance::WOODEN) ? Appearance::RANDOM : Appearance::WOODEN;
+    
+    // Actualizar el texto informativo de la apariencia
+    optionsTexts[menuOptions.size() + 1].second->setString(
+        "Apariencia: " + std::string(currentAppearance == Appearance::WOODEN ? "Madera" : "Colores aleatorios")
+    );
+
+    appearance = currentAppearance;
+}
+
+void MenuState::setModeOption(sf::RenderWindow& window, int* state) {
+    //TODO: Implementar
+}
+
+void MenuState::setAccessibilityOption(sf::RenderWindow& window, int* state) {
+    //TODO: Implementar
+}
+
+void MenuState::exitGameOption(sf::RenderWindow& window, int* state) {
+    window.close();
+}

@@ -6,6 +6,7 @@
 #define DEFAULT_LEVEL 3  // Número de discos inicial
 
 unsigned int level = DEFAULT_LEVEL; // No me gusta que esto sea necesario
+unsigned int appearance = 0; // 0: color aleatorio, 1: textura de madera
 
 struct Controls {
     sf::Keyboard::Key first_towel = sf::Keyboard::J;
@@ -19,10 +20,10 @@ GameState::GameState(unsigned int width, unsigned int height)
       diskWidth(height/7), diskHeight(height/35) {
     
     // Inicializar torres   
-    torre1 = new Torre(level, width/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
-    torre2 = new Torre(0, width/2 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
-    torre3 = new Torre(0, width*3/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
-    torreAux = new Torre(0, width/2 - 150, height/2, 300, diskHeight);
+    torre1 = new Torre(level, width/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
+    torre2 = new Torre(0, width/2 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
+    torre3 = new Torre(0, width*3/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
+    torreAux = new Torre(0, width/2 - 150, height/2, 300, diskHeight, appearance);
 
     // Inicializar textos
     sf::Font* font = new sf::Font();
@@ -53,9 +54,9 @@ void GameState::init(sf::RenderWindow& window) {
     delete torre1;
     delete torre2;
     delete torre3;
-    torre1 = new Torre(level, width/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
-    torre2 = new Torre(level, width/2 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
-    torre3 = new Torre(level, width*3/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight);
+    torre1 = new Torre(level, width/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
+    torre2 = new Torre(level, width/2 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
+    torre3 = new Torre(level, width*3/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, appearance);
 
     // La segunda torre y la tercera siempre están vacías
     torre1->fill();
