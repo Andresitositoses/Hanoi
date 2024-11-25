@@ -1,22 +1,35 @@
-all: clean compile link
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -I src/include -g
+LDFLAGS = -L src/lib
 
-compile:
-	g++ -I src/include -c src/main.cpp -o obj/main.o -g
-	g++ -I src/include -c src/interface.cpp -o obj/interface.o -g
-	g++ -I src/include -c src/torre.cpp -o obj/torre.o -g
-	g++ -I src/include -c src/MenuState.cpp -o obj/MenuState.o -g
-	g++ -I src/include -c src/GameState.cpp -o obj/GameState.o -g
-	g++ -I src/include -c src/EndState.cpp -o obj/EndState.o -g
+# Librerías estáticas
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lportaudio_x64 -lfftw3
 
-link:
-	g++ \
-	obj/main.o \
-	obj/interface.o \
-	obj/torre.o \
-	obj/MenuState.o \
-	obj/GameState.o \
-	obj/EndState.o \
-	-o hanoi -L src/lib -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -g
+# Archivos fuente y objetos
+SRCS = src/main.cpp \
+       src/interface.cpp \
+       src/torre.cpp \
+       src/MenuState.cpp \
+       src/GameState.cpp \
+       src/EndState.cpp
 
+OBJS = $(SRCS:src/%.cpp=obj/%.o)
+
+# Ejecutable
+TARGET = hanoi
+
+# Objetivo principal
+all: clean $(TARGET)
+
+# Enlace
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS) $(LIBS) -g
+
+# Regla de compilación
+obj/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Limpiar
 clean:
-	del /q obj\*.* hanoi.exe
+	del /q obj\*.* $(TARGET).exe
