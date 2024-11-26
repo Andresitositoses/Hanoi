@@ -14,7 +14,7 @@ private:
     std::vector<std::pair<sf::Font*, sf::Text*>> optionsTexts;
     int selectedOption;
     std::vector<std::pair<std::string, void(MenuState::*)(sf::RenderWindow&, int*)>> menuOptions;
-    unsigned int currentAppearance = Appearance::RANDOM;
+    unsigned int currentAppearance = Appearance::COLORS;
 
 public:
     MenuState(unsigned int width, unsigned int height);

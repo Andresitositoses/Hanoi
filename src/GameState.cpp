@@ -6,7 +6,7 @@
 #define DEFAULT_LEVEL 3  // Número de discos inicial
 
 unsigned int level = DEFAULT_LEVEL; // No me gusta que esto sea necesario
-unsigned int appearance = 0; // 0: color aleatorio, 1: textura de madera
+Appearance appearance = Appearance::COLORS; // 0: color aleatorio, 1: textura de madera
 
 struct Controls {
     sf::Keyboard::Key first_towel = sf::Keyboard::J;

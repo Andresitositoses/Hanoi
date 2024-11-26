@@ -4,20 +4,19 @@
 
 #include "include/torre.hpp"
 
-Torre::Torre(unsigned int level, double posX, double posY, double width, double height, unsigned int appearance) 
+Torre::Torre(unsigned int level, double posX, double posY, double width, double height, Appearance appearance) 
     : posX(posX), posY(posY), baseDiskWidth(width), diskHeight(height), prop((level > 0) ? (double) (1. / level) : 0), appearance(appearance) {
     this->disks = vector<Anilla>(); // Vector de anillas
     this->level = level;
 
     // Cargar la textura en el constructor
-    if (appearance == Appearance::RANDOM) {
+    if (appearance == Appearance::COLORS) {
         srand(time(NULL));
-    } else if (appearance == Appearance::WOODEN) {
-        if (!diskTexture.loadFromFile("img/wooden_disk.png")) {
+    } else {
+        string path = AppearanceStrings.at(appearance);
+        if (!diskTexture.loadFromFile(path)) {
             // Manejar error si no se puede cargar
         }
-    } else {
-        srand(time(NULL));
     }
 }
 
@@ -49,14 +48,11 @@ void Torre::empty() {
 void Torre::generateDisk(double width, double height, double posX, double posY) {
     Anilla* disk = new Anilla(Vector2f(width, height));
     disk->setPosition(posX, posY);
-    if (appearance == Appearance::RANDOM) {
+    if (appearance == Appearance::COLORS) {
         disk->setTexture(nullptr);
         disk->setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
-    } else if (appearance == Appearance::WOODEN) {
-        disk->setTexture(&diskTexture);
     } else {
-        disk->setTexture(nullptr);
-        disk->setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
+        disk->setTexture(&diskTexture);
     }
     this->disks.push_back(*disk);
     delete disk;
@@ -102,7 +98,7 @@ void Torre::draw(RenderWindow &window) {
 
 void Torre::cambiarApariencia() {
     // Alternar entre las apariencias existentes
-    appearance = (appearance == WOODEN) ? RANDOM : WOODEN;
+    appearance = (appearance == WOODEN) ? COLORS : WOODEN;
     
     // Actualizar la apariencia de todas las anillas existentes
     for(auto& disk : disks) {

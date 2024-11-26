@@ -51,11 +51,23 @@ MenuState::MenuState(unsigned int width, unsigned int height)
         appearanceText->setFont(*levelFont);
         std::string appearanceStr = "";
         switch (currentAppearance) {    
-            case Appearance::RANDOM:
+            case Appearance::COLORS:
                 appearanceStr = "Colores aleatorios";
                 break;
             case Appearance::WOODEN:
                 appearanceStr = "Madera";
+                break;
+            case Appearance::BRICK:
+                appearanceStr = "Ladrillos";
+                break;
+            case Appearance::ICE:
+                appearanceStr = "Hielo";
+                break;
+            case Appearance::ROCKS:
+                appearanceStr = "Rocas";
+                break;
+            case Appearance::UNIVERSE:
+                appearanceStr = "Universo";
                 break;
             default:
                 appearanceStr = "Colores aleatorios";
@@ -146,12 +158,34 @@ void MenuState::setLevelOption(sf::RenderWindow& window, int* state) {
 }
 
 void MenuState::setAppearanceOption(sf::RenderWindow& window, int* state) {
-    currentAppearance = (currentAppearance == Appearance::WOODEN) ? Appearance::RANDOM : Appearance::WOODEN;
+    currentAppearance = (currentAppearance == Appearance::UNIVERSE) ? Appearance::COLORS : currentAppearance + 1; // Si es el último, vuelve a empezar
     
     // Actualizar el texto informativo de la apariencia
-    optionsTexts[menuOptions.size() + 1].second->setString(
-        "Apariencia: " + std::string(currentAppearance == Appearance::WOODEN ? "Madera" : "Colores aleatorios")
-    );
+    std::string appearanceStr = "";
+    switch (currentAppearance) {
+        case Appearance::WOODEN:
+            appearanceStr = "Madera";
+            break;
+        case Appearance::COLORS:
+            appearanceStr = "Colores aleatorios";
+            break;
+        case Appearance::BRICK:
+            appearanceStr = "Ladrillos";
+            break;
+        case Appearance::ICE:
+            appearanceStr = "Hielo";
+            break;
+        case Appearance::ROCKS:
+            appearanceStr = "Rocas";
+            break;
+        case Appearance::UNIVERSE:
+            appearanceStr = "Universo";
+            break;
+        default:
+            appearanceStr = "Colores aleatorios";
+            break;
+    }
+    optionsTexts[menuOptions.size() + 1].second->setString("Apariencia: " + appearanceStr);
 
     appearance = currentAppearance;
 }
