@@ -12,7 +12,8 @@ SRCS = src/main.cpp \
        src/torre.cpp \
        src/MenuState.cpp \
        src/GameState.cpp \
-       src/EndState.cpp
+       src/EndState.cpp \
+       src/notesDetector.cpp
 
 OBJS = $(SRCS:src/%.cpp=obj/%.o)
 

@@ -1,6 +1,10 @@
 #include <SFML/Graphics.hpp>
-#include "include/interface.hpp"
+#include "interface.hpp"
 #include <iostream>
+#include "include/MusicalController/notesDetector.h"
+
+#define SCREEN_WIDTH 1920
+#define SCREEN_HEIGHT 1080
 
 int main() {
     // Verificar que podemos cargar las fuentes
@@ -14,11 +18,14 @@ int main() {
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
 
     // Crear la ventana con resolución Full HD
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Torres de Hanoi", sf::Style::Default);
+    sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Torres de Hanoi", sf::Style::Default);
     window.setFramerateLimit(60);
 
-    // Crear la interfaz con las dimensiones de la ventana
-    Interface interface(1920, 1080);
+    // Crear la interfaz con la resolución de la pantalla
+    Interface interface(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    NotesDetector notesDetector;
+    notesDetector.start();
 
     // Bucle principal del juego
     while (window.isOpen()) {
@@ -28,6 +35,11 @@ int main() {
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
+        }
+
+        std::string note;
+        if (notesDetector.getDetectedNote(note)) {
+            std::cout << "Nota detectada: " << note << std::endl;
         }
 
         // Actualizar estado del juego
