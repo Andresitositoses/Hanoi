@@ -10,6 +10,7 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -lportaudio_x64 
 SRCS = src/main.cpp \
        src/interface.cpp \
        src/torre.cpp \
+       src/ProgramState.cpp \
        src/MenuState.cpp \
        src/GameState.cpp \
        src/EndState.cpp \

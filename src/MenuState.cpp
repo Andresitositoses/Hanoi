@@ -18,7 +18,7 @@ MenuState::MenuState(unsigned int width, unsigned int height)
             {"Numero de anillas", &MenuState::setLevelOption},
             {"Apariencia", &MenuState::setAppearanceOption},
             {"Modo", &MenuState::setModeOption},
-            {"Accesibilidad", &MenuState::setAccessibilityOption},
+            {"Controles", &MenuState::setControlsOption},
             {"Salir del juego", &MenuState::exitGameOption}
         };
 
@@ -49,34 +49,18 @@ MenuState::MenuState(unsigned int width, unsigned int height)
         // Crear el texto de la apariencia actual
         sf::Text* appearanceText = new sf::Text();
         appearanceText->setFont(*levelFont);
-        std::string appearanceStr = "";
-        switch (currentAppearance) {    
-            case Appearance::COLORS:
-                appearanceStr = "Colores aleatorios";
-                break;
-            case Appearance::WOODEN:
-                appearanceStr = "Madera";
-                break;
-            case Appearance::BRICK:
-                appearanceStr = "Ladrillos";
-                break;
-            case Appearance::ICE:
-                appearanceStr = "Hielo";
-                break;
-            case Appearance::ROCKS:
-                appearanceStr = "Rocas";
-                break;
-            case Appearance::UNIVERSE:
-                appearanceStr = "Universo";
-                break;
-            default:
-                appearanceStr = "Colores aleatorios";
-                break;
-        }
-        appearanceText->setString("Apariencia: " + appearanceStr);
+        appearanceText->setString("Apariencia: " + getAppearanceString());
         appearanceText->setCharacterSize(40);
         appearanceText->setPosition(50, 100); // Debajo del texto del nivel
         optionsTexts.push_back({levelFont, appearanceText});
+
+        // Crear el texto del modo de control actual
+        sf::Text* controlText = new sf::Text();
+        controlText->setFont(*levelFont);
+        controlText->setString("Controles: " + getControlModeString());
+        controlText->setCharacterSize(40);
+        controlText->setPosition(50, 150); // Debajo del texto de apariencia
+        optionsTexts.push_back({levelFont, controlText});
     }
 }
 
@@ -135,11 +119,13 @@ void MenuState::draw(sf::RenderWindow& window) {
         window.draw(*text);
     }
     
-    // Dibujar los textos informativos (nivel y apariencia)
+    // Dibujar los textos informativos (nivel, apariencia y controles)
     const auto& [levelFont, levelText] = optionsTexts[menuOptions.size()];
     const auto& [appearanceFont, appearanceText] = optionsTexts[menuOptions.size() + 1];
+    const auto& [controlFont, controlText] = optionsTexts[menuOptions.size() + 2];
     window.draw(*levelText);
     window.draw(*appearanceText);
+    window.draw(*controlText);
 } 
 
 // Menu options
@@ -149,53 +135,41 @@ void MenuState::startGameOption(sf::RenderWindow& window, int* state) {
 }
 
 void MenuState::setLevelOption(sf::RenderWindow& window, int* state) {
-    level = (level >= MAX_LEVEL) ? 1 : level + 1;
+    setLevel(getLevel() >= MAX_LEVEL ? 1 : getLevel() + 1);
     
     // Actualizar el texto informativo del nivel
     optionsTexts[menuOptions.size()].second->setString(
-        "Nivel actual: " + std::to_string(level)
+        "Nivel actual: " + std::to_string(getLevel())
     );
 }
 
 void MenuState::setAppearanceOption(sf::RenderWindow& window, int* state) {
-    currentAppearance = (currentAppearance == Appearance::UNIVERSE) ? Appearance::COLORS : currentAppearance + 1; // Si es el último, vuelve a empezar
+    Appearance newAppearance = (getAppearance() == Appearance::UNIVERSE) ? 
+                              Appearance::COLORS : 
+                              static_cast<Appearance>(static_cast<int>(getAppearance()) + 1);
+    
+    setAppearance(newAppearance);
     
     // Actualizar el texto informativo de la apariencia
-    std::string appearanceStr = "";
-    switch (currentAppearance) {
-        case Appearance::WOODEN:
-            appearanceStr = "Madera";
-            break;
-        case Appearance::COLORS:
-            appearanceStr = "Colores aleatorios";
-            break;
-        case Appearance::BRICK:
-            appearanceStr = "Ladrillos";
-            break;
-        case Appearance::ICE:
-            appearanceStr = "Hielo";
-            break;
-        case Appearance::ROCKS:
-            appearanceStr = "Rocas";
-            break;
-        case Appearance::UNIVERSE:
-            appearanceStr = "Universo";
-            break;
-        default:
-            appearanceStr = "Colores aleatorios";
-            break;
-    }
-    optionsTexts[menuOptions.size() + 1].second->setString("Apariencia: " + appearanceStr);
-
-    appearance = currentAppearance;
+    optionsTexts[menuOptions.size() + 1].second->setString("Apariencia: " + getAppearanceString());
 }
 
 void MenuState::setModeOption(sf::RenderWindow& window, int* state) {
     //TODO: Implementar
 }
 
-void MenuState::setAccessibilityOption(sf::RenderWindow& window, int* state) {
-    //TODO: Implementar
+void MenuState::setControlsOption(sf::RenderWindow& window, int* state) {
+    ControlMode newMode = (getControlMode() == ControlMode::KEYBOARD) ? 
+                         ControlMode::FLUTE : 
+                         ControlMode::KEYBOARD;
+    
+    setControlMode(newMode);
+    
+    // Actualizar el texto informativo del modo de control
+    std::string controlStr = (getControlMode() == ControlMode::KEYBOARD) ? 
+                            "Teclado" : "Flauta";
+    
+    optionsTexts[menuOptions.size() + 2].second->setString("Controles: " + controlStr);
 }
 
 void MenuState::exitGameOption(sf::RenderWindow& window, int* state) {

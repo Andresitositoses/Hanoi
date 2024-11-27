@@ -13,7 +13,7 @@ Torre::Torre(unsigned int level, double posX, double posY, double width, double 
     if (appearance == Appearance::COLORS) {
         srand(time(NULL));
     } else {
-        string path = AppearanceStrings.at(appearance);
+        string path = AppearancePaths.at(appearance);
         if (!diskTexture.loadFromFile(path)) {
             // Manejar error si no se puede cargar
         }
@@ -93,21 +93,5 @@ bool Torre::isPlaceable(Anilla disk) {
 void Torre::draw(RenderWindow &window) {
     for(int i=0; i < disks.size(); i++){
         window.draw(disks.at(i));
-    }
-}
-
-void Torre::cambiarApariencia() {
-    // Alternar entre las apariencias existentes
-    appearance = (appearance == WOODEN) ? COLORS : WOODEN;
-    
-    // Actualizar la apariencia de todas las anillas existentes
-    for(auto& disk : disks) {
-        if (appearance == WOODEN) {
-            disk.setTexture(&diskTexture);
-            disk.setFillColor(sf::Color::White); // Reset color
-        } else {
-            disk.setTexture(nullptr);
-            disk.setFillColor(Color(rand() % 256, rand() % 256, rand() % 256));
-        }
     }
 }
