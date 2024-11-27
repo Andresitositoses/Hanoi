@@ -19,7 +19,7 @@ void NotesDetector::initializePortAudio() {
     audioData.bufferSize = 2048;
     audioData.buffer.resize(audioData.bufferSize);
     audioData.currentIndex = 0;
-    audioData.lastDetectedNote = "---";
+    audioData.lastDetectedNote = NONE;
     audioData.isNoteUpdated = false;
 
     setupInputStream();
@@ -66,22 +66,28 @@ void NotesDetector::stop() {
     }
 }
 
-bool NotesDetector::getDetectedNote(std::string& note) {
-    if (audioData.isNoteUpdated) {
-        note = audioData.lastDetectedNote;
-        audioData.isNoteUpdated = false;
-        return true;
-    }
-    return false;
+Note NotesDetector::getDetectedNote() {
+    return audioData.lastDetectedNote;
 }
 
-std::string NotesDetector::detectNote(float frequency) {
+std::string NotesDetector::getDetectedNoteString() {
+    std::string noteString = "";
+    switch (audioData.lastDetectedNote) {
+        case SI: noteString = "SI"; break;
+        case LA: noteString = "LA"; break;
+        case SOL: noteString = "SOL"; break;
+        default: noteString = "NONE"; break;
+    }
+    return noteString;
+}
+
+Note NotesDetector::detectNote(float frequency) {
     for (const auto& nota : NOTAS) {
         if (std::abs(frequency - nota.second) < FREQUENCY_TOLERANCE) {
             return nota.first;
         }
     }
-    return "---";
+    return NONE;
 }
 
 float NotesDetector::findDominantFrequency(const fftw_complex* output, int N, double sampleRate) {
@@ -133,7 +139,7 @@ void NotesDetector::processAudioBuffer(AudioData* data) {
     fftw_execute(plan);
     
     float dominantFreq = findDominantFrequency(output, data->bufferSize, data->sampleRate);
-    std::string nota = detectNote(dominantFreq);
+    Note nota = detectNote(dominantFreq);
     
     // Actualizar la nota detectada
     data->lastDetectedNote = nota;

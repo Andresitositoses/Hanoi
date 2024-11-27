@@ -14,13 +14,18 @@ using namespace std;
 #define M_PI 3.14159265358979323846
 #endif
 
-const float FREQUENCY_TOLERANCE = 30.0;
+const float FREQUENCY_TOLERANCE = 25.0;
+
+enum Note {
+    NONE,
+    SI, LA, SOL, FA, MI, RE, DO
+};
 
 // Frecuencias de las notas (en Hz)
-const std::pair<std::string, float> NOTAS[] = {
-    {"SI", 987.77}, {"LA", 880.00}, {"SOL", 783.99},
-    {"FA", 698.46}, {"MI", 659.26}, {"RE", 587.33},
-    {"DO", 523.25}
+const std::pair<Note, float> NOTAS[] = {
+    {SI, 987.77}, {LA, 880.00}, {SOL, 783.99},
+    {FA, 698.46}, {MI, 659.26}, {RE, 587.33},
+    {DO, 523.25}
 };
 
 typedef struct {
@@ -28,7 +33,7 @@ typedef struct {
     std::vector<float> buffer;
     size_t bufferSize;
     size_t currentIndex;
-    std::string lastDetectedNote;
+    Note lastDetectedNote;
     bool isNoteUpdated;
 } AudioData;
 
@@ -41,7 +46,8 @@ class NotesDetector {
         ~NotesDetector();
         void start();
         void stop();
-        bool getDetectedNote(std::string& note);
+        Note getDetectedNote();
+        std::string getDetectedNoteString();
     private:
         void initializePortAudio();
         void setupInputStream();
@@ -52,7 +58,7 @@ class NotesDetector {
                                 PaStreamCallbackFlags statusFlags,
                                 void* userData);
         static float findDominantFrequency(const fftw_complex* output, int N, double sampleRate);
-        static std::string detectNote(float frequency);
+        static Note detectNote(float frequency);
 };
 
 

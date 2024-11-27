@@ -2,6 +2,7 @@
 #include "ProgramState.hpp"
 #include "Torre.hpp"
 #include <vector>
+#include <SFML/System/Clock.hpp>
 
 class GameState : public ProgramState {
 private:
@@ -12,7 +13,8 @@ private:
     bool tab, tab_pressed;
     bool hasRingTaken;
     bool keyPressed;
-    sf::Keyboard::Key lastKeyPressed;
+    SelectedTower lastTowerSelected;
+    sf::Clock keyPressClock;
 
 public:
     GameState(unsigned int width, unsigned int height);

@@ -30,3 +30,4 @@ const std::map<ControlMode, std::string> ControlModeStrings = {
 unsigned int ProgramState::level = 3;  // Nivel por defecto
 Appearance ProgramState::currentAppearance = Appearance::COLORS;  // Apariencia por defecto
 ControlMode ProgramState::currentControlMode = ControlMode::KEYBOARD;  // Modo de control por defecto 
+NotesDetector ProgramState::notesDetector;

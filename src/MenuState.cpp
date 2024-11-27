@@ -166,8 +166,7 @@ void MenuState::setControlsOption(sf::RenderWindow& window, int* state) {
     setControlMode(newMode);
     
     // Actualizar el texto informativo del modo de control
-    std::string controlStr = (getControlMode() == ControlMode::KEYBOARD) ? 
-                            "Teclado" : "Flauta";
+    std::string controlStr = getControlModeString();
     
     optionsTexts[menuOptions.size() + 2].second->setString("Controles: " + controlStr);
 }

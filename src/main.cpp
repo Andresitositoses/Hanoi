@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include "interface.hpp"
 #include <iostream>
-#include "include/MusicalController/notesDetector.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
@@ -24,9 +23,6 @@ int main() {
     // Crear la interfaz con la resolución de la pantalla
     Interface interface(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    NotesDetector notesDetector;
-    notesDetector.start();
-
     // Bucle principal del juego
     while (window.isOpen()) {
         // Procesar eventos
@@ -35,11 +31,6 @@ int main() {
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
-        }
-
-        std::string note;
-        if (notesDetector.getDetectedNote(note)) {
-            std::cout << "Nota detectada: " << note << std::endl;
         }
 
         // Actualizar estado del juego

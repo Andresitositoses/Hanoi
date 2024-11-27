@@ -4,15 +4,9 @@
 
 #define FONTS_PATH "Fonts\\"
 
-struct Controls {
-    sf::Keyboard::Key first_towel = sf::Keyboard::J;
-    sf::Keyboard::Key second_towel = sf::Keyboard::K;
-    sf::Keyboard::Key third_towel = sf::Keyboard::L;
-} controls;
-
 GameState::GameState(unsigned int width, unsigned int height) 
     : width(width), height(height), tab(false), tab_pressed(false), 
-      hasRingTaken(false), keyPressed(false), lastKeyPressed(sf::Keyboard::Unknown),
+      hasRingTaken(false), keyPressed(false), lastTowerSelected(SelectedTower::NO_TOWER),
       diskWidth(height/7), diskHeight(height/35) {
     
     // Inicializar torres   
@@ -65,15 +59,18 @@ void GameState::init(sf::RenderWindow& window) {
     // Reiniciar estado del tab
     tab = false;
     tab_pressed = false;
+
+    //TODO: Inicializar dispositivo de control, ya sea el teclado (que no habría que hacer nada) o la flauta (Inicializar NotesDetector)
+    
 }
 
 void GameState::run(sf::RenderWindow& window, int& state) {
     tab_manage();
     
     // Gestión del movimiento de torres
-    manage_movements(sf::Keyboard::isKeyPressed(controls.first_towel),
-                   sf::Keyboard::isKeyPressed(controls.second_towel),
-                   sf::Keyboard::isKeyPressed(controls.third_towel),
+    manage_movements(getSelectedTower() == SelectedTower::LEFT_TOWER,
+                   getSelectedTower() == SelectedTower::MIDDLE_TOWER,
+                   getSelectedTower() == SelectedTower::RIGHT_TOWER,
                    torre1, torre2, torre3, torreAux);
                    
     // Determinar si se ha ganado
@@ -120,9 +117,11 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
     if (first_selected || second_selected || third_selected) {
         if (!keyPressed) {
             keyPressed = true;
-            if (first_selected) lastKeyPressed = controls.first_towel;
-            else if (second_selected) lastKeyPressed = controls.second_towel;
-            else lastKeyPressed = controls.third_towel;
+            keyPressClock.restart();  // Reiniciar el reloj cuando se presiona una tecla
+            
+            if (first_selected) lastTowerSelected = SelectedTower::LEFT_TOWER;
+            else if (second_selected) lastTowerSelected = SelectedTower::MIDDLE_TOWER;
+            else lastTowerSelected = SelectedTower::RIGHT_TOWER;
             
             // Lógica de movimiento
             if (!hasRingTaken) {
@@ -160,7 +159,9 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
             }
         }
     } else {
-        keyPressed = false;
-        lastKeyPressed = sf::Keyboard::Unknown;
+        // Solo considerar la tecla como no presionada si ha pasado al menos 1 segundo
+        if (keyPressClock.getElapsedTime().asSeconds() >= 1.0f) {
+            keyPressed = false;
+        }
     }
 }
