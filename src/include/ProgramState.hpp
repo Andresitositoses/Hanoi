@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
 #include "MusicalController/notesDetector.h"
+#include <chrono>
 
 // Apariencias
 
@@ -91,12 +92,12 @@ public:
                        sf::Keyboard::isKeyPressed(sf::Keyboard::L) ? SelectedTower::RIGHT_TOWER : SelectedTower::NO_TOWER;
             case FLUTE:
                 Note detectedNote = notesDetector.getDetectedNote();
-                if (notesDetector.getDetectedNoteString() != "NONE") {
-                    std::cout << "Nota detectada: " << notesDetector.getDetectedNoteString() << std::endl;
-                }
+                //if (notesDetector.getDetectedNoteString() != "NONE") {
+                    //std::cout << "Nota detectada: " << notesDetector.getDetectedNoteString() << " - Tiempo: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() << std::endl;
+                //}
                 return detectedNote == Note::SI ? SelectedTower::LEFT_TOWER :
-                       detectedNote == Note::LA ? SelectedTower::MIDDLE_TOWER :
-                       detectedNote == Note::SOL ? SelectedTower::RIGHT_TOWER : SelectedTower::NO_TOWER;
+                       detectedNote == Note::SOL ? SelectedTower::MIDDLE_TOWER :
+                       detectedNote == Note::MI ? SelectedTower::RIGHT_TOWER : SelectedTower::NO_TOWER;
         }
         return SelectedTower::NO_TOWER;
     }

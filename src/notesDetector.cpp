@@ -4,6 +4,11 @@
 
 #include "include/MusicalController/notesDetector.h"
 
+#define BASE_SENSITIVITY 0.7  // Valor base entre 0.0 y 1.0
+                             // Más bajo = más sensible
+                             // Más alto = menos sensible
+                             // Bajado de 0.9 a 0.7
+
 NotesDetector::NotesDetector() {
     initializePortAudio();
 }
@@ -14,9 +19,9 @@ void NotesDetector::initializePortAudio() {
         throw std::runtime_error("Error al inicializar PortAudio: " + std::string(Pa_GetErrorText(err)));
     }
 
-    // Configurar datos de audio
+    // Aumentamos el tamaño del buffer para mejor resolución frecuencial
     audioData.sampleRate = 44100;
-    audioData.bufferSize = 2048;
+    audioData.bufferSize = 4096;  // Aumentado de 2048 a 4096
     audioData.buffer.resize(audioData.bufferSize);
     audioData.currentIndex = 0;
     audioData.lastDetectedNote = NONE;
@@ -35,7 +40,7 @@ void NotesDetector::setupInputStream() {
                                      0,          // sin output
                                      paFloat32,  // formato de muestra
                                      audioData.sampleRate,
-                                     1024,       // frames por buffer
+                                     2048,       // Aumentado de 1024 a 2048
                                      audioCallback,
                                      &audioData);
 
@@ -82,8 +87,15 @@ std::string NotesDetector::getDetectedNoteString() {
 }
 
 Note NotesDetector::detectNote(float frequency) {
+    // Si la frecuencia es 0 (señal muy débil) retornamos NONE
+    if (frequency == 0.0f) {
+        // std::cout << "No se detecta ninguna nota" << std::endl;  // Opcional: descomentar para debug
+        return NONE;
+    }
+
     for (const auto& nota : NOTAS) {
         if (std::abs(frequency - nota.second) < FREQUENCY_TOLERANCE) {
+            std::cout << "Nota detectada: " << nota.first << " - Frecuencia: " << frequency << std::endl;
             return nota.first;
         }
     }
@@ -91,15 +103,65 @@ Note NotesDetector::detectNote(float frequency) {
 }
 
 float NotesDetector::findDominantFrequency(const fftw_complex* output, int N, double sampleRate) {
+    // Calculamos los umbrales basados en la sensibilidad
+    const double amplitudeThreshold = 0.5 + (BASE_SENSITIVITY * 0.3);  // Rango: 0.5 - 0.8 (antes 0.4 - 0.8)
+    const double powerThreshold = 0.002 + (BASE_SENSITIVITY * 0.003);  // Rango: 0.002 - 0.005 (antes 0.001 - 0.005)
+    
+    // Primero calculamos la potencia absoluta de la señal
+    double signalPower = 0.0;
+    for (int i = 0; i < N/2; i++) {
+        double real = output[i][0];
+        double imag = output[i][1];
+        signalPower += (real * real + imag * imag) / N;
+    }
+    
+    // Si la potencia absoluta es muy baja, no hay sonido real
+    if (signalPower < powerThreshold) {
+        return 0.0f;
+    }
+    
     double maxAmplitude = 0.0;
     int dominantFreqIndex = 0;
     
-    for (int i = 0; i < N/2; i++) {
+    // Encontrar la amplitud máxima para normalizar
+    double maxPossibleAmplitude = 0.0;
+    for (int i = 3; i < N/2; i++) {  // Empezamos desde 3 para captar mejor los graves
         double amplitude = std::sqrt(output[i][0] * output[i][0] + output[i][1] * output[i][1]);
-        if (amplitude > maxAmplitude) {
+        maxPossibleAmplitude = std::max(maxPossibleAmplitude, amplitude);
+    }
+    
+    // Si la amplitud máxima es muy baja, no hay señal significativa
+    if (maxPossibleAmplitude < 1e-6) {
+        return 0.0f;
+    }
+    
+    // Buscar la frecuencia dominante
+    for (int i = 3; i < N/2; i++) {
+        double amplitude = std::sqrt(output[i][0] * output[i][0] + output[i][1] * output[i][1]);
+        amplitude = amplitude / maxPossibleAmplitude;
+        
+        if (amplitude > amplitudeThreshold && amplitude > maxAmplitude) {
             maxAmplitude = amplitude;
             dominantFreqIndex = i;
         }
+    }
+    
+    // Si no encontramos ninguna frecuencia que supere el umbral
+    if (maxAmplitude < amplitudeThreshold) {
+        return 0.0f;
+    }
+    
+    // Solo hacer interpolación si realmente encontramos una frecuencia dominante
+    if (dominantFreqIndex > 0 && dominantFreqIndex < N/2 - 1) {
+        double alpha = std::sqrt(output[dominantFreqIndex-1][0] * output[dominantFreqIndex-1][0] + 
+                               output[dominantFreqIndex-1][1] * output[dominantFreqIndex-1][1]) / maxPossibleAmplitude;
+        double beta = std::sqrt(output[dominantFreqIndex][0] * output[dominantFreqIndex][0] + 
+                              output[dominantFreqIndex][1] * output[dominantFreqIndex][1]) / maxPossibleAmplitude;
+        double gamma = std::sqrt(output[dominantFreqIndex+1][0] * output[dominantFreqIndex+1][0] + 
+                               output[dominantFreqIndex+1][1] * output[dominantFreqIndex+1][1]) / maxPossibleAmplitude;
+        
+        double p = 0.5 * (alpha - gamma) / (alpha - 2*beta + gamma);
+        return (dominantFreqIndex + p) * sampleRate / N;
     }
     
     return dominantFreqIndex * sampleRate / N;
@@ -128,12 +190,18 @@ int NotesDetector::audioCallback(const void* inputBuffer, void* outputBuffer,
 void NotesDetector::processAudioBuffer(AudioData* data) {
     std::vector<double> input(data->bufferSize);
     fftw_complex* output = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * data->bufferSize));
-    fftw_plan plan = fftw_plan_dft_r2c_1d(data->bufferSize, input.data(), output, FFTW_ESTIMATE);
+    fftw_plan plan = fftw_plan_dft_r2c_1d(data->bufferSize, input.data(), output, FFTW_MEASURE);
 
-    // Aplicar ventana Hanning
+    // Aplicar ventana Blackman-Harris para mejor resolución espectral
     for (size_t i = 0; i < data->bufferSize; i++) {
-        double hann = 0.5 * (1 - cos(2 * M_PI * i / (data->bufferSize - 1)));
-        input[i] = data->buffer[i] * hann;
+        const double a0 = 0.35875;
+        const double a1 = 0.48829;
+        const double a2 = 0.14128;
+        const double a3 = 0.01168;
+        double blackmanHarris = a0 - a1 * cos(2*M_PI*i/(data->bufferSize-1)) 
+                                  + a2 * cos(4*M_PI*i/(data->bufferSize-1)) 
+                                  - a3 * cos(6*M_PI*i/(data->bufferSize-1));
+        input[i] = data->buffer[i] * blackmanHarris;
     }
 
     fftw_execute(plan);
@@ -141,7 +209,7 @@ void NotesDetector::processAudioBuffer(AudioData* data) {
     float dominantFreq = findDominantFrequency(output, data->bufferSize, data->sampleRate);
     Note nota = detectNote(dominantFreq);
     
-    // Actualizar la nota detectada
+    // Actualizar la nota detectada siempre, sea NONE o no
     data->lastDetectedNote = nota;
     data->isNoteUpdated = true;
 

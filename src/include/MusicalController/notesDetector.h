@@ -14,7 +14,7 @@ using namespace std;
 #define M_PI 3.14159265358979323846
 #endif
 
-const float FREQUENCY_TOLERANCE = 25.0;
+const float FREQUENCY_TOLERANCE = 30.0;
 
 enum Note {
     NONE,

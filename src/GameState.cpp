@@ -4,10 +4,12 @@
 
 #define FONTS_PATH "Fonts\\"
 
+#define FLUTE_KEY_PRESS_SENSITIVITY 0.5f
+
 GameState::GameState(unsigned int width, unsigned int height) 
     : width(width), height(height), tab(false), tab_pressed(false), 
       hasRingTaken(false), keyPressed(false), lastTowerSelected(SelectedTower::NO_TOWER),
-      diskWidth(height/7), diskHeight(height/35) {
+      keyPressSensibility(FLUTE_KEY_PRESS_SENSITIVITY), diskWidth(height/7), diskHeight(height/35) {
     
     // Inicializar torres   
     torre1 = new Torre(getLevel(), width/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, getAppearance());
@@ -115,6 +117,14 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
     
     // Control de teclas presionadas
     if (first_selected || second_selected || third_selected) {
+        if (first_selected && lastTowerSelected != SelectedTower::LEFT_TOWER ||
+            second_selected && lastTowerSelected != SelectedTower::MIDDLE_TOWER ||
+            third_selected && lastTowerSelected != SelectedTower::RIGHT_TOWER) {
+            keyPressed = false; // Ha habido un cambio de selección brusco (El jugador es rápido)
+        } else if (keyPressClock.getElapsedTime().asSeconds() < FLUTE_KEY_PRESS_SENSITIVITY) {
+            keyPressClock.restart(); // Se ha presionado la misma tecla, pero no ha pasado el tiempo mínimo (Se trata de la misma pulsación)
+        }
+    
         if (!keyPressed) {
             keyPressed = true;
             keyPressClock.restart();  // Reiniciar el reloj cuando se presiona una tecla
@@ -159,8 +169,8 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
             }
         }
     } else {
-        // Solo considerar la tecla como no presionada si ha pasado al menos 1 segundo
-        if (keyPressClock.getElapsedTime().asSeconds() >= 1.0f) {
+        // Solo considerar la tecla como no presionada si ha pasado al menos 0.3 segundos
+        if (keyPressClock.getElapsedTime().asSeconds() >= FLUTE_KEY_PRESS_SENSITIVITY) {
             keyPressed = false;
         }
     }

@@ -15,6 +15,7 @@ private:
     bool keyPressed;
     SelectedTower lastTowerSelected;
     sf::Clock keyPressClock;
+    float keyPressSensibility;
 
 public:
     GameState(unsigned int width, unsigned int height);
