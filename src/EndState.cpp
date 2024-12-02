@@ -6,9 +6,6 @@
 EndState::EndState(unsigned int width, unsigned int height) 
     : width(width), height(height) {
     font = new sf::Font();
-    
-    // Generar estrellas
-    estrellas = generarEstrellas(width, height, 200);  // 200 estrellas
 }
 
 EndState::~EndState() {
@@ -55,13 +52,16 @@ void EndState::init(sf::RenderWindow& window) {
     statsText->setFont(*font);
     statsText->setCharacterSize(30);
     statsText->setString("Movimientos realizados: " + std::to_string(stats.moves) + "\n" +
-                        "Tiempo: " + timeStr);
+                        "Tiempo transcurrido: " + timeStr);
     statsText->setPosition(
         width/2.0f - statsText->getLocalBounds().width/2.0f,
         height/2.0f + 50.0f
     );
     
     texts[TextId::STATS] = {font, statsText};
+
+    // Generar estrellas
+    estrellas = generarEstrellas(width, height, 200, ColorMode::RANDOM);  // 200 estrellas
 }
 
 void EndState::run(sf::RenderWindow& window, int& state) {
@@ -72,6 +72,9 @@ void EndState::run(sf::RenderWindow& window, int& state) {
     }
     
     if (escReleased && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+        // Limpiar estrellas
+        estrellas.clear();
+
         state = MENU;
         escReleased = false;
     }

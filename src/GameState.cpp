@@ -71,8 +71,6 @@ void GameState::init(sf::RenderWindow& window) {
     // Reiniciar estado del tab
     tab = false;
     tab_pressed = false;
-
-    //TODO: Inicializar dispositivo de control, ya sea el teclado (que no habría que hacer nada) o la flauta (Inicializar NotesDetector)
     
     // Actualizar los textos de los controles
     auto controlNames = getTriggerInputNames();
@@ -123,7 +121,14 @@ void GameState::run(sf::RenderWindow& window, int& state) {
 }
 
 void GameState::draw(sf::RenderWindow& window) {
-    window.clear();
+    window.clear(sf::Color::Black);
+    
+    // Actualizar y dibujar las estrellas
+    float deltaTime = estrellasReloj.restart().asSeconds();
+    actualizarEstrellas(estrellas, width, height, deltaTime, MovimientoEstrellas::RADIAL);
+    for(const auto& estrella : estrellas) {
+        window.draw(estrella.forma);
+    }
     
     // Actualizar texto del temporizador si está activo
     if (timerStarted) {
@@ -225,6 +230,8 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
                     moveCount++;
                     texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
                     texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
+                    // Generar estrellas en la posición donde se coloca el disco
+                    generarNuevasEstrellas(width/4.0f, t1->getTopPosition().y, 10, disk->getFillColor());
                 }
                 else if (second_selected && t2->isPlaceable(tAux->top())) {
                     Anilla* disk = tAux->popDisk();
@@ -233,6 +240,8 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
                     moveCount++;
                     texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
                     texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
+                    // Generar estrellas en la posición donde se coloca el disco
+                    generarNuevasEstrellas(width/2.0f, t2->getTopPosition().y, 10, disk->getFillColor());
                 }
                 else if (third_selected && t3->isPlaceable(tAux->top())) {
                     Anilla* disk = tAux->popDisk();
@@ -241,6 +250,8 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
                     moveCount++;
                     texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
                     texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
+                    // Generar estrellas en la posición donde se coloca el disco
+                    generarNuevasEstrellas(width*3/4.0f, t3->getTopPosition().y, 10, disk->getFillColor());
                 }
             }
         }
@@ -324,6 +335,13 @@ void GameState::initControllersTexts(sf::Font* font) {
 }
 
 void GameState::finishGame(int& state) {
+    // Limpiar estrellas previas
+    estrellas.clear();
+
     setLastGameStats(LastGameStats{moveCount, std::to_string(gameTimer.getElapsedTime().asSeconds())});
     state = END;
+}
+
+void GameState::generarNuevasEstrellas(float x, float y, int cantidad, sf::Color color) {
+    generarExplosionEstrellas(estrellas, x, y, cantidad, 100.0f, color);
 }

@@ -35,6 +35,7 @@ public:
     bool isEmpty() {return disks.empty();}
     bool isComplete() {return disks.size() == level;}
     void draw(RenderWindow &window);
+    sf::Vector2f getTopPosition() {return disks.back().getPosition();}
 private:
     void generateDisk(double width, double height, double posX, double posY);
 };

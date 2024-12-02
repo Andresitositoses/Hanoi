@@ -5,6 +5,7 @@
 #include <SFML/System/Clock.hpp>
 #include <map>
 #include <array>
+#include "universe.hpp"
 
 class GameState : public ProgramState {
 private:
@@ -34,6 +35,10 @@ private:
     bool timerStarted;
     int moveCount;
 
+    // Para las estrellas
+    std::vector<Estrella> estrellas;
+    sf::Clock estrellasReloj;
+
 public:
     GameState(unsigned int width, unsigned int height);
     ~GameState() override;
@@ -46,4 +51,5 @@ private:
     void initControllersTexts(sf::Font* font);
     int getMinimumMoves() const { return (1 << getLevel()) - 1; } // 2^n - 1, donde n es el número de anillas
     void finishGame(int& state);
+    void generarNuevasEstrellas(float x, float y, int cantidad, sf::Color color);
 }; 
