@@ -61,7 +61,7 @@ void Torre::generateDisk(double width, double height, double posX, double posY) 
 // Añade una anilla externa a la torre
 bool Torre::addDisk(Anilla* disk) {
     if (disks.empty()) {
-        disk->setPosition(posX, posY);
+        disk->setPosition(posX + (baseDiskWidth - disk->getSize().x) / 2, posY);
     } else {
         disk->setPosition(disks.back().getPosition().x + (disks.back().getSize().x - disk->getSize().x) / 2, disks.back().getPosition().y - diskHeight);
     }

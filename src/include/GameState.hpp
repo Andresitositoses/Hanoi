@@ -3,11 +3,22 @@
 #include "Torre.hpp"
 #include <vector>
 #include <SFML/System/Clock.hpp>
+#include <map>
+#include <array>
 
 class GameState : public ProgramState {
 private:
+    enum TextId {
+        TIMER,
+        MIN_MOVES,
+        CURRENT_MOVES,
+        LEFT_TOWER,
+        MIDDLE_TOWER,
+        RIGHT_TOWER
+    };
+
     Torre *torre1, *torre2, *torre3, *torreAux;
-    std::vector<std::pair<sf::Font*, sf::Text*>> texts;
+    std::map<TextId, std::pair<sf::Font*, sf::Text*>> texts;
     unsigned int width, height;
     unsigned int diskWidth, diskHeight;
     bool tab, tab_pressed;
@@ -16,6 +27,12 @@ private:
     SelectedTower lastTowerSelected;
     sf::Clock keyPressClock;
     float keyPressSensibility;
+    sf::RectangleShape towerBase1;
+    sf::RectangleShape towerBase2;
+    sf::RectangleShape towerBase3;
+    sf::Clock gameTimer;
+    bool timerStarted;
+    int moveCount;
 
 public:
     GameState(unsigned int width, unsigned int height);
@@ -26,4 +43,7 @@ public:
 private:
     bool tab_manage();
     void manage_movements(bool first_selected, bool second_selected, bool third_selected, Torre* t1, Torre* t2, Torre* t3, Torre* tAux);
+    void initControllersTexts(sf::Font* font);
+    int getMinimumMoves() const { return (1 << getLevel()) - 1; } // 2^n - 1, donde n es el número de anillas
+    void finishGame(int& state);
 }; 

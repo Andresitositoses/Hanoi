@@ -1,6 +1,7 @@
 #include "include/GameState.hpp"
 #include "include/interface.hpp"
 #include <SFML/Graphics.hpp>
+#include <locale>
 
 #define FONTS_PATH "Fonts\\"
 
@@ -17,16 +18,25 @@ GameState::GameState(unsigned int width, unsigned int height)
     torre3 = new Torre(0, width*3/4 - diskWidth/2, height - diskHeight*5, diskWidth, diskHeight, getAppearance());
     torreAux = new Torre(0, width/2 - 150, height/2, 300, diskHeight, getAppearance());
 
+    // Crear las líneas base de las torres
+    float baseHeight = 3.0f; // Altura de la línea base
+    float baseWidth = diskWidth * 1.2f; // Un poco ms ancha que los discos
+
+    towerBase1.setSize(sf::Vector2f(baseWidth, baseHeight));
+    towerBase2.setSize(sf::Vector2f(baseWidth, baseHeight));
+    towerBase3.setSize(sf::Vector2f(baseWidth, baseHeight));
+
+    towerBase1.setPosition(width/4 - baseWidth/2, height - diskHeight*4);
+    towerBase2.setPosition(width/2 - baseWidth/2, height - diskHeight*4);
+    towerBase3.setPosition(width*3/4 - baseWidth/2, height - diskHeight*4);
+
+    towerBase1.setFillColor(sf::Color::White);
+    towerBase2.setFillColor(sf::Color::White);
+    towerBase3.setFillColor(sf::Color::White);
+
     // Inicializar textos
     sf::Font* font = new sf::Font();
-    if(font->loadFromFile((std::string)FONTS_PATH + "stjelogo/Stjldbl1.ttf")) {
-        sf::Text* text = new sf::Text();
-        text->setFont(*font);
-        text->setString("En juego\nPresiona ESC para salir al menú principal");
-        text->setCharacterSize(50);
-        text->setPosition(width/4.0f, 100.0f);
-        texts.push_back({font, text});
-    }
+    initControllersTexts(font);
 }
 
 GameState::~GameState() {
@@ -35,9 +45,9 @@ GameState::~GameState() {
     delete torre3;
     delete torreAux;
     
-    for(auto& [font, text] : texts) {
-        delete font;
-        delete text;
+    for(auto& [id, pair] : texts) {
+        delete pair.first;
+        delete pair.second;
     }
 }
 
@@ -64,6 +74,32 @@ void GameState::init(sf::RenderWindow& window) {
 
     //TODO: Inicializar dispositivo de control, ya sea el teclado (que no habría que hacer nada) o la flauta (Inicializar NotesDetector)
     
+    // Actualizar los textos de los controles
+    auto controlNames = getTriggerInputNames();
+    texts[TextId::LEFT_TOWER].second->setString(controlNames[0]);
+    texts[TextId::MIDDLE_TOWER].second->setString(controlNames[1]);
+    texts[TextId::RIGHT_TOWER].second->setString(controlNames[2]);
+
+    // Recentrar los textos
+    std::array<TextId, 3> towerTexts = {LEFT_TOWER, MIDDLE_TOWER, RIGHT_TOWER};
+    for (const auto& textId : towerTexts) {
+        sf::FloatRect bounds = texts[textId].second->getLocalBounds();
+        float xPos = (textId == LEFT_TOWER) ? width/4.0f : 
+                    (textId == MIDDLE_TOWER) ? width/2.0f : width*3/4.0f;
+        texts[textId].second->setPosition(
+            xPos - bounds.width/2,
+            height - diskHeight*3
+        );
+    }
+
+    // Reiniciar temporizador y contadores
+    timerStarted = false;
+    gameTimer.restart();
+    texts[TextId::TIMER].second->setString("0:00");
+    moveCount = 0;
+    texts[TextId::MIN_MOVES].second->setString(sf::String(L"Movimientos mínimos: " + std::to_string(getMinimumMoves())));
+    texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
+    texts[TextId::CURRENT_MOVES].second->setFillColor(sf::Color::Green);
 }
 
 void GameState::run(sf::RenderWindow& window, int& state) {
@@ -77,7 +113,7 @@ void GameState::run(sf::RenderWindow& window, int& state) {
                    
     // Determinar si se ha ganado
     if (torre3->isComplete()) {
-        state = END;
+        finishGame(state);
     }
 
     // Transición provisional al estado final
@@ -89,15 +125,36 @@ void GameState::run(sf::RenderWindow& window, int& state) {
 void GameState::draw(sf::RenderWindow& window) {
     window.clear();
     
+    // Actualizar texto del temporizador si está activo
+    if (timerStarted) {
+        sf::Time elapsed = gameTimer.getElapsedTime();
+        int minutes = static_cast<int>(elapsed.asSeconds()) / 60;
+        int seconds = static_cast<int>(elapsed.asSeconds()) % 60;
+        
+        std::string timeStr = std::to_string(minutes) + ":" + 
+                             (seconds < 10 ? "0" : "") + std::to_string(seconds);
+        
+        texts[TextId::TIMER].second->setString(timeStr);
+        texts[TextId::TIMER].second->setPosition(
+            width/2.0f - texts[TextId::TIMER].second->getLocalBounds().width/2,
+            50.0f
+        );
+    }
+
     // Dibujar torres
     torre1->draw(window);
     torre2->draw(window);
     torre3->draw(window);
     torreAux->draw(window);
+
+    // Dibujar líneas base de las torres
+    window.draw(towerBase1);
+    window.draw(towerBase2);
+    window.draw(towerBase3);
     
     // Dibujar textos
-    for(const auto& [font, text] : texts) {
-        window.draw(*text);
+    for(const auto& [id, pair] : texts) {
+        window.draw(*pair.second);
     }
 } 
 
@@ -135,6 +192,16 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
             
             // Lógica de movimiento
             if (!hasRingTaken) {
+                // Iniciar temporizador con la primera anilla que se toma
+                if (!timerStarted && (
+                    (first_selected && !t1->isEmpty()) ||
+                    (second_selected && !t2->isEmpty()) ||
+                    (third_selected && !t3->isEmpty())
+                )) {
+                    timerStarted = true;
+                    gameTimer.restart();
+                }
+
                 if (first_selected && !t1->isEmpty() && tAux->isEmpty()) {
                     Anilla* disk = t1->popDisk();
                     tAux->addDisk(disk);
@@ -155,16 +222,25 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
                     Anilla* disk = tAux->popDisk();
                     t1->addDisk(disk);
                     hasRingTaken = false;
+                    moveCount++;
+                    texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
+                    texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
                 }
                 else if (second_selected && t2->isPlaceable(tAux->top())) {
                     Anilla* disk = tAux->popDisk();
                     t2->addDisk(disk);
                     hasRingTaken = false;
+                    moveCount++;
+                    texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
+                    texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
                 }
                 else if (third_selected && t3->isPlaceable(tAux->top())) {
                     Anilla* disk = tAux->popDisk();
                     t3->addDisk(disk);
                     hasRingTaken = false;
+                    moveCount++;
+                    texts[TextId::CURRENT_MOVES].second->setString(sf::String(L"Movimientos realizados: " + std::to_string(moveCount)));
+                    texts[TextId::CURRENT_MOVES].second->setFillColor(moveCount > getMinimumMoves() ? sf::Color::Red : sf::Color::Green);
                 }
             }
         }
@@ -174,4 +250,80 @@ void GameState::manage_movements(bool first_selected, bool second_selected, bool
             keyPressed = false;
         }
     }
+}
+
+void GameState::initControllersTexts(sf::Font* font) {
+    // Crear una fuente normal para el temporizador y los contadores
+    sf::Font* normalFont = new sf::Font();
+    if(normalFont->loadFromFile((std::string)FONTS_PATH + "arial.ttf")) {
+        // Texto del temporizador
+        sf::Text* timerText = new sf::Text();
+        timerText->setFont(*normalFont);
+        timerText->setString("0:00");
+        timerText->setCharacterSize(50);
+        timerText->setPosition(width/2.0f - timerText->getLocalBounds().width/2, 50.0f);
+        texts[TextId::TIMER] = {normalFont, timerText};
+
+        // Texto de movimientos mínimos (superior)
+        sf::Text* minMovesText = new sf::Text();
+        minMovesText->setFont(*normalFont);
+        sf::String minText = L"Movimientos mínimos: " + std::to_string(getMinimumMoves());
+        minMovesText->setString(minText);
+        minMovesText->setCharacterSize(30);
+        minMovesText->setPosition(10.0f, 10.0f);
+        texts[TextId::MIN_MOVES] = {normalFont, minMovesText};
+
+        // Texto de movimientos actuales
+        sf::Text* currentMovesText = new sf::Text();
+        currentMovesText->setFont(*normalFont);
+        currentMovesText->setString(L"Movimientos realizados: 0");
+        currentMovesText->setCharacterSize(30);
+        currentMovesText->setPosition(10.0f, 45.0f);
+        currentMovesText->setFillColor(sf::Color::Green);
+        texts[TextId::CURRENT_MOVES] = {normalFont, currentMovesText};
+    }
+
+    // Resto de textos con la fuente decorativa
+    if(font->loadFromFile((std::string)FONTS_PATH + "stjelogo/Stjldbl1.ttf")) {
+        // Torre izquierda
+        sf::Text* leftControl = new sf::Text();
+        leftControl->setFont(*font);
+        leftControl->setString(getTriggerInputNames()[0]);
+        leftControl->setCharacterSize(30);
+        sf::FloatRect leftBounds = leftControl->getLocalBounds();
+        leftControl->setPosition(
+            width/4.0f - leftBounds.width/2,
+            height - diskHeight*3
+        );
+        texts[TextId::LEFT_TOWER] = {font, leftControl};
+
+        // Torre central
+        sf::Text* middleControl = new sf::Text();
+        middleControl->setFont(*font);
+        middleControl->setString(getTriggerInputNames()[1]);
+        middleControl->setCharacterSize(30);
+        sf::FloatRect middleBounds = middleControl->getLocalBounds();
+        middleControl->setPosition(
+            width/2.0f - middleBounds.width/2,
+            height - diskHeight*3
+        );
+        texts[TextId::MIDDLE_TOWER] = {font, middleControl};
+
+        // Torre derecha
+        sf::Text* rightControl = new sf::Text();
+        rightControl->setFont(*font);
+        rightControl->setString(getTriggerInputNames()[2]);
+        rightControl->setCharacterSize(30);
+        sf::FloatRect rightBounds = rightControl->getLocalBounds();
+        rightControl->setPosition(
+            width*3/4.0f - rightBounds.width/2,
+            height - diskHeight*3
+        );
+        texts[TextId::RIGHT_TOWER] = {font, rightControl};
+    }
+}
+
+void GameState::finishGame(int& state) {
+    setLastGameStats(LastGameStats{moveCount, std::to_string(gameTimer.getElapsedTime().asSeconds())});
+    state = END;
 }

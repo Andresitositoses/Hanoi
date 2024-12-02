@@ -5,51 +5,90 @@
 
 EndState::EndState(unsigned int width, unsigned int height) 
     : width(width), height(height) {
+    font = new sf::Font();
     
-    // Crear y almacenar la fuente de manera persistente
-    sf::Font* font = new sf::Font();
-    if(font->loadFromFile((std::string)FONTS_PATH + "stjelogo/Stjldbl1.ttf")) {
-        sf::Text* text = new sf::Text();
-        text->setFont(*font);
-        text->setString("Fin de juego\nPresiona ESC para volver al menú");
-        text->setCharacterSize(60);
-        text->setPosition(width/2.0f, height/2.0f);
-        text->setOrigin(text->getLocalBounds().width/2.0f, text->getLocalBounds().height/2.0f);
-        
-        texts.push_back({font, text});
-    }
+    // Generar estrellas
+    estrellas = generarEstrellas(width, height, 200);  // 200 estrellas
 }
 
 EndState::~EndState() {
     // Limpieza de memoria
-    for(auto& [font, text] : texts) {
-        delete font;
-        delete text;
+    for(auto& [id, pair] : texts) {
+        delete pair.first;
+        delete pair.second;
     }
 }
 
 void EndState::init(sf::RenderWindow& window) {
-    // TODO: En esta etapa habría que mostrar el tiempo transcurrido, el número de movimientos, etc.
+    // Crear y almacenar la fuente de manera persistente
+    if(font->loadFromFile((std::string)FONTS_PATH + "arial.ttf")) {
+        sf::Text* text = new sf::Text();
+        text->setFont(*font);
+        text->setString("Torre resuelta");
+        text->setCharacterSize(60);
+        text->setPosition(width/2.0f, height/2.0f);
+        text->setOrigin(text->getLocalBounds().width/2.0f, text->getLocalBounds().height/2.0f);
+        
+        texts[TextId::TITLE] = {font, text};
+    }
+
+    // Limpiar el texto de estadísticas anterior si existe
+    auto it = texts.find(TextId::STATS);
+    if (it != texts.end()) {
+        delete it->second.second;
+        texts.erase(it);
+    }
+
+    // Obtener las estadísticas del último juego
+    LastGameStats stats = getLastGameStats();
+    
+    // Convertir el tiempo de string a float y formatear
+    float seconds = std::stof(stats.time);
+    int minutes = static_cast<int>(seconds) / 60;
+    int remainingSeconds = static_cast<int>(seconds) % 60;
+    std::string timeStr = std::to_string(minutes) + ":" + 
+                         (remainingSeconds < 10 ? "0" : "") + 
+                         std::to_string(remainingSeconds);
+
+    // Crear y configurar los textos de estadísticas
+    sf::Text* statsText = new sf::Text();
+    statsText->setFont(*font);
+    statsText->setCharacterSize(30);
+    statsText->setString("Movimientos realizados: " + std::to_string(stats.moves) + "\n" +
+                        "Tiempo: " + timeStr);
+    statsText->setPosition(
+        width/2.0f - statsText->getLocalBounds().width/2.0f,
+        height/2.0f + 50.0f
+    );
+    
+    texts[TextId::STATS] = {font, statsText};
 }
 
 void EndState::run(sf::RenderWindow& window, int& state) {
     static bool escReleased = false;
 
-    // Esperar a que se suelte la tecla ESC antes de permitir una nueva transición
     if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
         escReleased = true;
     }
     
-    // Solo transicionar si ESC fue soltado y presionado de nuevo
     if (escReleased && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
-        state = MENU;  // Volver al menú principal
-        escReleased = false;  // Resetear el flag
+        state = MENU;
+        escReleased = false;
     }
 }
 
 void EndState::draw(sf::RenderWindow& window) {
     window.clear(sf::Color::Black);
-    for(const auto& [font, text] : texts) {
-        window.draw(*text);
+    
+    // Actualizar y dibujar las estrellas
+    float deltaTime = estrellasReloj.restart().asSeconds();
+    actualizarEstrellas(estrellas, width, height, deltaTime);
+    for(const auto& estrella : estrellas) {
+        window.draw(estrella.forma);
     }
-} 
+        
+    // Dibujar los textos
+    for(const auto& [id, pair] : texts) {
+        window.draw(*pair.second);
+    }
+}
