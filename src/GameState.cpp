@@ -133,11 +133,25 @@ void GameState::draw(sf::RenderWindow& window) {
     // Actualizar texto del temporizador si está activo
     if (timerStarted) {
         sf::Time elapsed = gameTimer.getElapsedTime();
-        int minutes = static_cast<int>(elapsed.asSeconds()) / 60;
-        int seconds = static_cast<int>(elapsed.asSeconds()) % 60;
+        float seconds = elapsed.asSeconds();
         
-        std::string timeStr = std::to_string(minutes) + ":" + 
-                             (seconds < 10 ? "0" : "") + std::to_string(seconds);
+        int days = static_cast<int>(seconds) / (24 * 3600);
+        seconds = std::fmod(seconds, 24 * 3600);
+        int hours = static_cast<int>(seconds) / 3600;
+        seconds = std::fmod(seconds, 3600);
+        int minutes = static_cast<int>(seconds) / 60;
+        int remainingSeconds = static_cast<int>(std::fmod(seconds, 60));
+
+        // Construir el string del tiempo
+        std::string timeStr;
+        if (days > 0) {
+            timeStr += std::to_string(days) + "d ";
+        }
+        if (hours > 0 || days > 0) {
+            timeStr += std::to_string(hours) + "h ";
+        }
+        timeStr += std::to_string(minutes) + ":" + 
+                   (remainingSeconds < 10 ? "0" : "") + std::to_string(remainingSeconds);
         
         texts[TextId::TIMER].second->setString(timeStr);
         texts[TextId::TIMER].second->setPosition(

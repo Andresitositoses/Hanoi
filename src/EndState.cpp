@@ -41,11 +41,23 @@ void EndState::init(sf::RenderWindow& window) {
     
     // Convertir el tiempo de string a float y formatear
     float seconds = std::stof(stats.time);
+    int days = static_cast<int>(seconds) / (24 * 3600);
+    seconds = std::fmod(seconds, 24 * 3600);
+    int hours = static_cast<int>(seconds) / 3600;
+    seconds = std::fmod(seconds, 3600);
     int minutes = static_cast<int>(seconds) / 60;
-    int remainingSeconds = static_cast<int>(seconds) % 60;
-    std::string timeStr = std::to_string(minutes) + ":" + 
-                         (remainingSeconds < 10 ? "0" : "") + 
-                         std::to_string(remainingSeconds);
+    int remainingSeconds = static_cast<int>(std::fmod(seconds, 60));
+
+    // Construir el string del tiempo
+    std::string timeStr;
+    if (days > 0) {
+        timeStr += std::to_string(days) + "d ";
+    }
+    if (hours > 0 || days > 0) {
+        timeStr += std::to_string(hours) + "h ";
+    }
+    timeStr += std::to_string(minutes) + ":" + 
+               (remainingSeconds < 10 ? "0" : "") + std::to_string(remainingSeconds);
 
     // Crear y configurar los textos de estadísticas
     sf::Text* statsText = new sf::Text();
